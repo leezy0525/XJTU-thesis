@@ -1,0 +1,354 @@
+% !TeX root = ../main.tex
+\xiaosi
+
+\xchapter{相关理论技术}{Floating: Figures, Tables}
+
+\xsection{毫米波通信原理及数据处理方法}{hello}
+
+毫米波是一种介于紫外线和微波的电磁波，波长范围为1毫米到10毫米，频率大约为30到300吉赫（GHz）之间。较短的波长意味着毫米波设备能够将大型天线阵列封装在较小的物理尺寸中，极宽的高频带宽确保毫米波通信在密集的频谱条件下具有相当的吸引力\cite{wang2018millimeter}。
+
+\xsubsection{毫米波雷达通信原理}{Hello}
+
+毫米波雷达是一种使用毫米波段的电磁波来探测和测量目标的雷达系统，这种雷达被广泛应用于目标检测\cite{liu2023smurf}、
+自动驾驶\cite{roos2019radar}、航空监视\cite{morris2021detection}等领域。利用其进行感知的通信过程主要如下：
+
+信号发射过程：毫米波雷达通过自身的发射装置生成高频率的电磁波。这些波按照确定的频率和相位发射，能够穿过大气层并向前扩散。
+
+物体探测机制：在毫米波雷达释放的电磁波与路途中的物体（比如汽车、步行者或其它障碍）相遇时，这些波会被物体反射。反射波的特征，包括它们的方向和强度，会根据碰撞物的种类和形状有所不同。
+
+接收反射信号：雷达的接收捕捉到上述过程中被反射回来的部分毫米波信号。因为发射信号的原始属性（如频率和相位）是已知的，所以通过对这些信号进行分析，可以推断出反射体的关键信息。
+
+信号的分析与处理：雷达系统内置的信号处理器对捕获到的反射信号进行解析。通过对比发射的原始信号与收到的反射信号，该系统能够估算出物体的位置（通过计算信号的往返时长）、移动速度（依据多普勒效应，即频率变化），以及物体的方向（通过观察信号的入射角度）。
+
+\xsubsection{毫米波数据处理方法}{Hello}
+
+\subsubsection{距离测量方法}
+
+目前使用的毫米波雷达多为调频连续波雷达，其发射的调频连续波信号的瞬时频率随时间呈现线性的频谱变化趋势，这种信号被称
+为调频连续波（FMCW，也被称为啁啾信号或者chirp信号）。如果chirp信号的载频为$f_c$，带宽为$\mbf{B}$，发射时宽为$T_c$，那么在单个chirp周期内发射天线Tx的信
+号如公式（2-1）所示：
+
+\begin{equation}
+    S_\mathrm{Tx}\left(t\right)=A_\mathrm{Tx}\exp\left(j\left(2\pi f_\mathrm{c}t+\pi k_\mathrm{s}t^2\right)\right)\quad t\in\left(0,T_\mathrm{c}\right)
+\end{equation}
+式中：$A_\mathrm{Tx}$——发射信号振幅；$j$——虚数信号；$k_\mathrm{s}$——调频率。
+
+假设目标与雷达之间的距离为$R$,那么在经过了时延后，接收天线Rx的回波信号如公式（2-2）所示：
+
+\begin{equation}
+    S_{\mathrm{Rx}}\left(t\right)=A_{\mathrm{Rx}}\exp\left(j\left(2\pi f_{c}\left(t-\tau\right)t+\pi k_{s}\left(t-\tau\right)^{2}\right)\right)\quad t\in\left(0,T_{c}\right)
+\end{equation}
+式中：$A_\mathrm{Rx}$——回波信号振幅。
+
+通过混频器对回波信号和发射信号进行处理后得到如公式（2-3）所示的中频信号$S_{\mathrm{IF}}$：
+
+\begin{equation}
+    S_{\mathrm{IF}}\left(t\right)=A_{\mathrm{IF}}\mathrm{exp}\Big(j\Big(2\pi k_{\mathrm{s}}f_{\mathrm{c}}\tau t+2\pi f_{\mathrm{c}}\tau-\pi k_{\mathrm{s}}\tau^{2}\Big)\Big)
+\end{equation}
+
+可以看出，$S_{\mathrm{IF}}$频率受到回波时延调制，表示如下：
+\begin{equation}
+    f_{\mathrm{IF}}=k_{s}\tau=\frac{2k_{s}R}{c}
+\end{equation}
+式中：$c$——光速
+
+经过快速傅里叶变换（Fast Fourier Transform，FFT）后，目标物体与雷达之间的距离可以被表示为：
+\begin{equation}
+    R=\frac{cf_{\mathrm{IF}}}{2k_{\mathrm{s}}}=\frac{cf_{\mathrm{IF}}T_{\mathrm{c}}}{2B}
+\end{equation}
+
+可以看出，利用FFT可以从中频信号中获取目标和雷达之间的距离，因此该变换也被称为距离FFT（Range-FFT），其对于提高雷达成像的分辨率和准确性有重要意义，特别是在合成孔径雷达（SAR）成像中，
+距离傅里叶变换用于处理雷达沿着其飞行路径接收到的连续信号，以生成地面目标的高分辨率图像。
+
+假设信号的采样频率为$f_{\mathrm{s}}$，采样数量为$N$，根据奈奎斯特采样定律可知，复数信号的采样频率至少需要大于采
+样信号的最大频率。由此可知，毫米波雷达最大的不模糊估计距离为：
+
+\begin{equation}
+    R_{\mathrm{max-analog}}=\frac{cf_{\mathrm{IF-max}}T_{\mathrm{c}}}{2B}\leq R_{\mathrm{max-digital}}=\frac{cf_{\mathrm{s}}T_{\mathrm{c}}}{2B}
+\end{equation}
+
+然而，在实际毫米波测量的情况中，最大不模糊距离值受限于负频谱的存在只能达到理论值的一半，如公式（2-7）所示：
+
+\begin{equation}
+    R_{\max}=\frac{cf_{s}T_{c}}{4B}
+\end{equation}
+
+对于信号来说，当整段距离的采样总数为$N_{s}$时，距离分辨率可表示如下：
+\begin{equation}
+    R_{\mathrm{res}}=\frac{R_{\mathrm{max-digital}}}{N_{s}}=\frac{cf_{s}T_{c}}{2BN_{s}}
+\end{equation}
+
+\subsubsection{速度测量方法}
+
+目标的速度可以利用多个中频信号经Range-FFT和时频域变换处理后的相位差异观测出\cite{song2014velocity}。通信过程中，
+将$N_{c}$个具有相同的发射时宽的一系列chirp信号被称为帧。则在一个帧周期之中，chirp信号的频率随时间变化情况如图2-1所示。
+\begin{figure}[H]
+    \centering
+    \includegraphics[height=5.8cm]{xjtu_blue.pdf}
+    \caption{一个帧周期内chirp信号的频率变化图}
+\end{figure}
+当一个帧周期内有$N_{c}$个chirp信号被发射，那么对于第$i$个中频信号，其相位$\varphi_{i}$可被表示为公式（2-9）：
+\begin{equation}
+    \varphi_{i}=2\pi\left(f_{c}\tau_{i}-\frac12k_{s}\tau_{i}^{2}\right)\quad i\in\left(1,N_{c}\right)
+\end{equation}
+
+毫米波雷达感知的目标移动速度一般小于\num{e2}，然而一个帧周期时间的数量级大约为\num{e-4},因此在该帧周期内可以将目标移动速度视为恒定值，
+同时目标的移动距离不会大于雷达最小距离分辨率。则对于第$i$个回波，满足：
+\begin{equation}
+    \tau_{i}=\frac{2\left(R_{1}+v(i-1)T_{\mathrm{c}}\right)}{c}
+\end{equation}
+式中：$v$——该帧周期内目标物体的移动速度；$R_{1}$——该帧周期内收到第一个回波时目标物体与雷达的距离。
+
+由公式（2-9）和公式（2-10）可知：
+\begin{equation}
+    \varphi_{i}=2\pi\left(\frac{2\left(R_{1}+\left(i-1\right)v T_{c}\right)f_{c}}{c}-\frac{2k_{s}\left(R_{1}+\left(i-1\right)v T_{c}\right)^{2}}{c^{2}}\right)
+\end{equation}
+
+其中$c^{2}$项可忽略，故可得到：
+\begin{equation}
+    \varphi_{i}=2\pi\left(\frac{2\left(i-1\right)v T_{c}f_{c}}{c}+\frac{2R_{1}}{c}\right)
+\end{equation}
+
+经过Range-FFT后，可观察到该帧周期内所有chirp的中频信号在同一距离上出现的峰值复包络能够组成新的复信号序列，其相位变化可以表示为：
+\begin{equation}
+    S_{\mathrm{doppler}}\left(\varphi_{i}\right)=A_{\mathrm{doppler}}\exp\left(j\cdot\varphi_{i}+\varphi_{\mathrm{doppler}}\right)
+\end{equation}
+式中：$\varphi_{\mathrm{doppler}}$——该复信号序列初始的相位
+
+其中，复信号序列的中心频率与目标物体速度相关。该信号序列的中心频率可以其在每个chirp的发射时宽为单位微分获得，如
+公式所示：
+\begin{equation}
+    f_{v}=\frac{1}{2\pi}\cdot\frac{\partial\varphi_{k}}{\partial\left(iT_{c}\right)}=\frac{2v f_{c}}{c}=\frac{2v}{\lambda}
+\end{equation}
+式中：$\lambda$——波长
+
+由公式（2-14）可知，对新产生的复信号序列进行FFT所得频域数值即为该距离单元目标的移动速度，因此该变换也被称为多普勒FFT（Doppler-FFT）。
+Doppler-FFT结合了多普勒效应的原理和FFT的计算效率，能够实时地处理大量数据，为雷达系统提供精确的速度度量。
+
+由公式（2-12）可知，两个相邻的chirp回波的相位差可表示为：
+\begin{equation}
+    \Delta\varphi=2\pi\Bigg(\frac{2v T_{c}f_{c}}{c}\Bigg)=\frac{4\pi v T_{c}}{\lambda}
+\end{equation}
+
+则目标的移动速度如下所示：
+\begin{equation}
+    v=\frac{\lambda\Delta\varphi}{4\pi T_{\mathrm{c}}}
+\end{equation}
+
+速度测量方法是利用相位差推导所得，考虑到数字信号处理中相位差存在不模糊区间，需要满足$\lambda\Delta\varphi$小于$\pi$，结合公式(2-16)可推导出$v<N/4T_{c}$。
+则雷达可测得目标最大的不模糊速度如公式（2-17）所示：
+\begin{equation}
+    v_{\max}=\frac{\lambda}{4T_{\mathrm{c}}}
+\end{equation}
+
+当同一位置存在两个移动且速度不同的目标，在接收各个目标反射的同一帧内的$N_{c}$个chirp信号的回波后，
+通过Range-FFT的处理生成了同等数量个具有相同距离的峰值的频谱图，图中的峰值均有不同的相位，且这些相位包含了两个目标的相位分量。
+提取所有频谱图中峰值位置的相位，并对$N_{c}$个向量进行Doppler-FFT会获得两个存在不同峰值的新频谱图，而峰值对应在图中的横坐标即为这
+两个物体的相位差，如图2-2所示。
+\begin{figure}[H]
+    \centering
+    \includegraphics[height=5.8cm]{xjtu_blue.pdf}
+    \caption{Doppler-FFT后产生的信号频谱图}
+\end{figure}
+
+若两个物体的速度分别为$v_{1}$和$v_{2}$，反射的chirp信号相位差为$\omega_{1}$和$\omega_{2}$，则由公式（2-16）可得：
+\begin{equation}
+    \nu_1=\frac{\lambda\omega_1}{4\pi T_c},\nu_2=\frac{\lambda\omega_2}{4\pi T_c}
+\end{equation}
+
+其中，$\omega_{1}$和$\omega_{2}$需满足$\Delta\omega_{1}=\omega_{2}-\omega_{1}>2\pi/N$才能确保二者被分开。当一帧内
+有$N_{c}$个信号回波时，可推导出雷达的速度分辨率如公式（2-19）所示：
+\begin{equation}
+    \nu_{\mathrm{res}}=\frac{\lambda}{2N_{c}T_{c}}
+\end{equation}
+
+\subsubsection{角度测量方法}
+本文在感知人体动作过程中使用了TI所生产的AWR1443BOOST雷达，包含了3个发射天线和4个接收天线。
+图2-3展示了在感知过程中该种毫米波雷达的天线排布情况以及等效转化的等效虚拟阵列。假设位于同一水平线
+的发射天线Tx1和Tx3之间距离为2$\lambda$，发射天线Tx2位于二者中央正上方且垂直方向距离为$\lambda/2$，所有的接收天线均在同一水平线
+等距排布且相邻天线的距离为$\lambda/2$。这样的排布方式使转换的等效虚拟阵列存在特殊的规律。在虚拟阵列中，发射天线Tx2与接收天线所组成的4个虚拟阵元位于中央正上方，Tx1和Tx3与
+接收天线组成的虚拟阵元在下方按从左到右的顺序排列。其中，所有位于同一水平线的相邻虚拟阵元距离为$\lambda/2$，上方阵元与
+下方阵元的垂直距离也为$\lambda/2$。
+\begin{figure}[H]
+    \centering
+    \includegraphics[height=5.8cm]{xjtu_blue.pdf}
+    \caption{毫米波雷达天线排布及等效虚拟阵列示意图}
+\end{figure}
+
+以该类型雷达为例，在感知目标的过程中，假设以雷达为原点构建空间坐标系，目标相对于雷达的位置坐标为（$x,y,z$）,与雷达之间
+距离为$R$，相对雷达的方位角为$\phi$，俯仰角为$\varphi$。该空间位置情况如图2-4所示。
+\begin{figure}[H]
+    \centering
+    \includegraphics[height=5.8cm]{xjtu_blue.pdf}
+    \caption{毫米波雷达天线排布及等效虚拟阵列示意图}
+\end{figure}
+
+由三角函数可推导出目标位置信息包含如下关系：
+\begin{equation}
+    \begin{cases}z=R\sin\varphi\\x=R\sin\varphi\cos\phi\\y=\sqrt{R^2-x^2-z^2}\end{cases}
+\end{equation}
+
+考虑到感知目标多为远场，则对于不同的虚拟阵元，同一信号回波与其方向均可视为平行。由此可以推导出垂直方向上相邻虚拟阵元信号回波因
+俯仰角导致的相位偏移$w_{z}$如公式（2-21）所示：
+\begin{equation}
+    w_{z}=\frac{2\pi}{\lambda}\cdot\frac{\lambda}{2}\cdot\sin\varphi=\pi\sin\varphi 
+\end{equation}
+
+基于相同原理，水平方向上相邻虚拟阵元信号回波因方位角导致的相位偏移$w_{x}$如公式（2-22）所示：
+\begin{equation}
+    w_{x}=\frac{2\pi}{\lambda}\cdot\frac{\lambda}{2}\cdot\sin\phi\cdot\cos\varphi=\pi\sin\phi\cos\varphi 
+\end{equation}
+
+由此可知，对于同一信号而言，下方的虚拟阵元的相位变化可组成新的信号序列$S_{1}$。该序列的中心频率响应就是方位角的相位偏移$w_{x}$，如
+公式（2-23）所示：
+\begin{equation}
+    S_{1}\left(m\right)=A_{1}\exp\left(j\cdot\left(w_{x}\left(m-1\right)+\psi\right)\right)
+\end{equation}
+式中：$m$——阵元序号；$\psi$——该信号序列的初始相位。
+
+对上述信号序列进行FFT处理后可以获得$w_{x}$，从而获得到达角，因此该变换也被称为角度FFT（Angle-FFT）。
+
+若对该序列进行Angle-FFT处理后，其频率最大响应对应的横坐标是$n_{\mathrm{max}}$，可得：
+\begin{equation}
+    wx=\frac{2\pi n_{\mathrm{max}}}{N}
+\end{equation}
+式中：$N$——信号序列数量。
+
+亦可得到该频率最大响应的峰值$P_{1}$表示如下：
+\begin{equation}
+    P_{1}=A_{1}e^{j\psi}
+\end{equation}
+
+上方虚拟阵元相位变化的信号序列$S_{2}(m)$则为：
+\begin{equation}
+    S_{2}(m)=A_{2}\exp\left(j\cdot\left(w_{x}\left(m-1\right)+\psi+2w_{x}-w_{z}\right)\right)
+\end{equation}
+
+则该频率最大响应的峰值$P_{2}$表示如下：
+\begin{equation}
+    P_{2}=A_{2}e^{j\left(\psi+2w_{x}-w_{z}\right)}
+\end{equation}
+
+将两个信号序列的共轭相乘，得到公式（2-28）：
+\begin{equation}
+    P_{1}P_{2}^{*}=A_{1}A_{2}e^{j(w_{z}-2w_{x})}
+\end{equation}
+
+由此可得$w_{x}$的表达式如下：
+\begin{equation}
+    w_{z}=\angle\left(P_{1}\cdot P_{2}^{*}\cdot e^{j(2w_{x})}\right)
+\end{equation}
+
+结合公式（2-20）和（2-22），即可获得目标相对于毫米波雷达的空间位置信息。
+
+\xsection{深度学习网络}{hello}
+本文使用深度学习网络来获取经信号处理后的毫米波频谱图中包含的特征信息，从而学习判别人体不同的动作。本
+文参考了深度学习领域的优秀网络架构。在本小节中，将对这些架构的基本原理进行具体介绍。
+
+\xsubsection{卷积神经网络}{Hello}
+深度学习中的神经网络（Neural Network，NN）是研究人员受到人脑工作机制的启发，被设计用来识别复杂的模式和
+数据关系的算法。卷积神经网络（Convolutional Neural Network,CNN）在神经网络的基础上，引入了对数据的卷积
+操作，使网络对特征学习更加有效。
+
+CNN主要由卷积层、激活层、池化层、全连接层等组成。毫无疑问，卷积层为CNN的核心
+部分。在该层中，利用与预设好大小的卷积核在输入数据上按一定步长滑动，在每个位置上将卷积核与其覆盖的数据部分对应元素相乘运算，然后求和，该过程被称为卷积。
+以图像$x$为例，卷积核$w$对其进行卷积操作的过程可以表示如下：
+\begin{equation}
+    y(m,n)=(x*w)(m,n)=\sum_{i,j}x(i,j)w(m-i,n-j)
+\end{equation}
+式中：$m$——卷积核中心所处图像的行位置；$n$——卷积核中心所处图像的列位置。
+
+运算过程中，卷积核感知的区域被称为感受野，该机制能够使卷积核对数据不同位置的空间局部特性加以利用，从而提取
+出高阶特征。滑动中的卷积核也学习到数据可能存在的平移不变性，以一张二维图像为例，当对图像做旋转，翻转等操作，卷积核
+依然能准确识别图像的类别。同时相较于传统的全连接层，卷积核的复用机制极大减少了网络训练过程中的参数量。激活层通常设置
+在卷积层后，利用非线性映射函数增加模型的非线性特性，从而提升网络学习复杂模式的能力和加快网络学习速度，该类函数也被称为激活函数。
+池化层通过对数据在不同位置上卷积运算后获取的信息进行整合过滤，从而降低了特征的尺寸和模型参数数量，理想的池化操作注重
+丢弃不相关细节，保留重要的信息\cite{gholamalinezhad2020pooling}。全连接层一般位于网络末端，将对网络所学习的特征映射到最终的
+分类结果上。
+
+CNN通常还会利用批归一化\cite{ioffe2015batch}（Batch Normalization，BN）和DropOut\cite{srivastava2014dropout}操作。BN主
+要被用来解决网络中参数更新导致的内部协变量偏移问题，加快训练速度。该方法主要分为两步：首先
+计算每个小批量数据的均值和方差，利用这些数值对数据进行标准化操作，接下来利用可学习参数缩放和平移标准化的数据。DropOut被用来解决神经网络在学习过程中因学到许多相互适应的非线性关系连接
+而出现的过拟合问题，通过在训练时随机丢弃或暂时移除网络中的部分单元迫使网络学习更具鲁棒性的特征，提高模型泛化能力。
+
+LeCun等人\cite{lecun1998gradient}提出的LeNet-5虽受限于当时的硬件发展问题，与传统机器学习方法相比并未显示出性能的优越性，
+但是确立了CNN的网络结构，为当今的神经网络设计奠定基础。随着通用GPU的兴起和深度学习理论的提出和发展，卷积神经网络在研究人员后续
+产出的工作中不断提升了性能。
+
+Alex等人\cite{krizhevsky2012imagenet}提出的AlexNet是CNN在大规模图像识别任务上的首次成功应用，在2012年ImageNet挑战赛中大幅度超越其他参赛模型的性能，
+该网络在LeNet的基础上进行了拓宽和延申，整体由5个卷积层、3个全连接层组成，并且创新性地使用了Relu激活函数，全连接层Dropout策略和多GPU训练技术。
+AlexNet的成功证明了深层网络可以有效处理复杂图像任务，标志着深度学习在视觉领域取得重大突破。
+
+Simonyan等人\cite{simonyan2014very}提出了VGG网络架构，就深度对性能的影响进行了探索。该网络设计具有分层和模块化的特点，
+使用了较AlexNet更小的卷积核，从而使网络深度达到了19层。VGG验证了小尺寸卷积核通过堆叠也可以达到近似大尺寸卷积核的效果，
+其结构理念推动了之后的深度神经网络设计发展，使采用小尺寸卷积核成为了未来构建网络的主流选择。
+
+Lin等人\cite{lin2013network}提出的NIN利用在传统的卷积层中嵌入微型网络的方式代替传统卷积运算，在帮助网络学习到更复杂的特征的同时显著减少了参数量。
+NIN给出了一种不同于简单层叠卷积网络的新颖思路，为后续网络设计提供了方向。
+
+Szegedy等人\cite{szegedy2015going}设计了GoogLeNet，其核心模块Inception的引入允许网络在每个模块中自适应地选择多种大小的卷积核增加网络宽度，多尺寸卷积核的使用也有效地捕捉到不同
+尺度上的特征，从而进一步提升了特征包含的信息量。
+
+许多对增加深度提高网络学习能力的工作为领域内研究人员开拓了探索道路。然而模型不断加深也带来了许多挑战，例如显著提升模型收敛难度，大幅增高了训练开销等，这些问题一度导致了
+深度学习发展的停滞。He等人\cite{he2016deep}提出了ResNet。通过引入残差模块，ResNet允许构建更深的网络架构而不会增加训练的难度。这些模块中的跳跃连
+接直接将输入连接到输出，确保了梯度可以顺利地在网络中传播，有效解决了深度神经网络训练中的梯度消失问题。ResNet显著提升了深度卷积模型在多个视觉任务上的性能，
+其出现也推动了自然语言处理等领域对网络设计思路的创新，对深度学习的发展产生了深远影响。
+
+\xsubsection{Transformer模型}{Hello}
+注意力(Attention)机制是研究人员在机器学习模型中嵌入的一种特殊结构，从而自动学习和度量输入数据对输出数据的贡献程度。
+
+\xsection{基于深度学习的域适应方法}{hello}
+深度神经网络近来在表示学习领域得到广泛的运用，这些网络能够从数据中提取出一般性的特征表征，显示出其强大的能力。但是，这种方法依赖于大量的标记数
+据进行训练，这一过程不仅成本高昂，耗时久，而且有时还难以实施。同时，神经网络通常假定训练和测试数据来自同一分布，但
+当存在域偏移时，模型性能可能会受到影响\cite{farahani2021brief}，例如一个以真实图像数据训练的网络模型，在对同类别的动漫图像进行分类预测时，
+输出结果精度会大大降低。为了应对这些挑战，深度域适应技术应运而生，它利用深度网络的特性和适应策略来
+弥补标注数据不足的问题，并提升模型在新域上的表现。目前计算机视觉\cite{chen2018domain}、自然语言处理\cite{guo2020multi}、语音识别\cite{sun2017unsupervised}等众多领域都有深度域适应的工作产出。
+基于深度学习的域适应方法主要由三个类别组成：基于差异性（Discrepancy-based）、
+基于重构（Reconstruction-based）和基于对抗（Adversarial-based）的方法。
+
+\xsubsection{基于差异性的深度域适应}{Hello}
+这类方法致力于通过缩减源域与目标域之间的分布差距来实现域适应。顾名思义，基于差异性的深度域适应主要依赖于对不同域之间分布距离的
+度量，如最大均值差异（MMD）、沃瑟斯坦距离(Wasserstein distance)等。该方法将深度模型分为两部分，特征提取器和分类器，分别用于提取数据特征分布和输出结果。模型训练过程如图2-5所示，主要最小化
+分类损失和基于差异性的损失。其中，分类损失对模型整体进行更新，以提升预测性能，基于差异性的损失通过更新特征提取器参数从而减小
+域间分布距离，从而使模型生成与源域相似的目标域特征。
+\begin{figure}[H]
+    \centering
+    \includegraphics[height=5.8cm]{xjtu_blue.pdf}
+    \caption{基于差异性的深度域适应训练过程示意图}
+\end{figure}
+
+Long等人\cite{long2015learning}提出的深度自适应网络（Deep Adaptation Network，DAN）便是该类方法的一个代表，它在多个特定任务的调整层使用MMD的相关变种MK‐MMD（Multi Kernel‐Maximum Mean Discrepancy），以此衡量和对准
+不同域的边缘分布。该方法假设虽然边缘分布存在偏差，但是条件分布保持一致，因此主要通过调整层对源域和目标域的边缘分布
+进行匹配，而不会直接对条件分布差异进行调整。Zhang等人\cite{zhang2015deep}提出深度迁移网络（Deep Transfer Network，DTN）利用MMD进行对齐，但其
+通过结合共享特征提取层和类别转换层来将边缘分布和条件分布同时对齐,实现了更为精细的域适应。
+
+\xsubsection{基于重构的深度域适应}{Hello}
+这类方法的核心思想是最小化重构误差来对齐源域和目标域之间的分布差异，即让模型学习从目标域图像转换到源域图像。模型方面主要由
+编码器-解码器网络和分类器组成。图2-6展示了基于重构的深度域适应常规训练过程，首先训练一个编码器以获取数据中共通的特征表示，再部署对应解码器
+学习将编码器的特征重构，同时利用源数据训练分类器实现基于源域的分类预测，从而提高了模型在目标域上的泛化能力。
+\begin{figure}[H]
+    \centering
+    \includegraphics[height=5.8cm]{xjtu_blue.pdf}
+    \caption{基于重构的深度域适应训练过程示意图}
+\end{figure}
+Ghifary等人\cite{ghifary2016deep}结合CNN架构提出
+深度重建分类网络（Deep Reconstruction Classification Networks，DRCN），该方法联合了监督学习和无监督学习策略，在编码器后设置两个管道
+分别用于分类和数据重构，使编码器参数在两个任务中共享，而解码器参数单独用于数据重构任务，以此加强了标签预测的准确性。Bousmalis等人\cite{bousmalis2016domain}
+设计的域分离网络（Domain Separation Network，DSN）在共享编码器的基础上分别为源域和目标域设置了私有的编码器，最后使用公有解码器重构数据和提供特征训练源域分类器，这种为
+各域建模的方式提高了模型学习域不变特征的能力。
+
+\xsubsection{基于对抗的深度域适应}{Hello}
+该类方法受到生成对抗网络（Generative Adversarial Networks，GAN）的启发,旨在通过特征提取器和域判别器之间的对抗学习来优化模型。
+基于对抗的深度域适应训练过程如图2-7所示，特征提取器用于提取目标域数据信息，生成混淆域判别器的域不变特征，域判别器则判别特征属于源域还是目标域，分类器则用于判定标签类别，
+整体训练直到真假难辨为止。
+\begin{figure}[H]
+    \centering
+    \includegraphics[height=5.8cm]{xjtu_blue.pdf}
+    \caption{基于重构的深度域适应训练过程示意图}
+\end{figure}
+Ganin等人\cite{ganin2015unsupervised}首先将对抗训练思想运用到深度域适应中，设置梯度反转层（GRL）来对齐源域和目标域之间差距，
+通过负标量和梯度相乘实现反转，使模型在域间特征相似的情况下有效进行对抗训练。Tzeng等人\cite{tzeng2017adversarial}则并未使
+用参数共享机制，通过最小化模型各部分的损失函数来学习更多领域独有的有特征，从而有效缩小源域和目标域的差距。Pei\cite{pei2018multi}
+考虑到许多该类方法中的单一域鉴别器存在鉴别组件自身混淆的隐患，设计了多鉴别器结构，从而实现类别水平上域间差距的细粒度对齐。
+
+
