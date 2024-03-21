@@ -295,7 +295,37 @@ Szegedy等人\cite{szegedy2015going}设计了GoogLeNet，其核心模块Inceptio
 其出现也推动了自然语言处理等领域对网络设计思路的创新，对深度学习的发展产生了深远影响。
 
 \xsubsection{Transformer模型}{Hello}
-注意力(Attention)机制是研究人员在机器学习模型中嵌入的一种特殊结构，从而自动学习和度量输入数据对输出数据的贡献程度。
+注意力(Attention)机制是一种独特的人类大脑处理机制，特别体现在视觉系统中。通过对整体图像进行快速浏览，人类能够识别出需要集中关注的特定区域。
+随后，大脑会将更多的注意力资源分配到这个区域，以便深入挖掘目标的详细信息，同时忽略其他不相关的信息。深度学习领域的Attention机制保留了核心理念，以选择出对当前任务目标更关键的信息为关键目标。
+
+Vaswani等人\cite{vaswani2017attention}受到Attention机制启发设计了Transfomer模型，并提出只依靠
+Attention机制就能够有效提取序列数据特征。该模型主要由编码器和解码器组成，输入数据在经过多层感知机(Multilayer Perceptron，MLP)处理后被扩展成一定纬度的
+输入数据单元（Token），通过对Token和相关矩阵进行向量乘法可以得到三个关键向量，分别被称为Q（Query）向量、K（Key）向量、V（Value）向量。
+Transfomer的Attention操作增强了所有Token对自身的表示，也被称为自注意力（Self-Attention）机制，可被描述如下：对Q向量和转置后的K向量进行矩阵乘法，再除以对Q、K向量共同维度$d_{k}$开平方根后的结果，最后进行
+softmax操作得到两个向量间的相关度衡量权重，对V向量的放缩将以该相关度为依据。其中，通过除以$d_{k}$的平方根可以缩小相关度中各项的方差，使得内部元素分布更为平滑，从而
+在训练过程中保持梯度稳定，因此该量也被称为缩放因子。该过程可被表示为公式（2-31）：
+\begin{equation}
+    \operatorname{Attention}(Q,K,V)=\operatorname{softmax}\left(\frac{QK^\mathrm{T}}{\sqrt{d^k}}\right)V
+\end{equation}
+
+Transfomer在对该机制扩展得到多头自注意力（Multi-head Self-Attention）机制，进一步减少了Attention的计算复杂度。在该过程中，按照维度把被映射到高维空间后的Token拆分至子空间，并利用相关矩阵进行乘法运算分别获得
+Q、K、V向量，从而可以在子空间中进行计算，最后将所有Attention信息进行合并。由于各子空间中Attention的分布也不相同，因此该机制可被理解为尝试从不同角度探索序列关联，再通过向量拼接
+将所有关联进行整合统一的操作。
+
+Transformer的所有模块最后通常都会进行层归一化（Layer Normalization，LN）从而规范优化数据空间，加快模型收敛速度。同时，在
+Attention操作后，还会经过由两个线性层的MLP，最后利用ReLU函数进行激活，从而增强模型表达能力。
+
+Transformer在提出之际主要被用于机器翻译任务。毫无疑问，在该应用场景中，文字输入顺序对翻译结果有很大影响。而Attention机制中认为Token的顺序不会改变
+最终结果。因此Transformer引入了特殊位置嵌入方法学习Token间的相对位置信息，如公式（2-32）所示：
+\begin{equation}
+    \begin{cases}PE\left(pos,2i\right)=\sin\left(pos/10000^{2i/d_{model}}\right)\\PE\left(pos,2i+1\right)=\cos\left(pos/10000^{2i/d_{model}}\right)&\end{cases}
+\end{equation}
+式中：$i$——向量元素在某一维度的向量中的位置序号；$d_{model}$——维数
+
+上述部分介绍了该模型的编码器部分。对于解码器，模型利用Mask操作使网络在训练时将后续信息进行遮盖，在输出时只会收到之前相邻列序位置的信息，确保了在翻译任务中
+将结果按序输出。
+
+Devlin等人\cite{devlin2018bert}基于Transformer提出了Bert模型，增加了模型的深度，
 
 \xsection{基于深度学习的域适应方法}{hello}
 深度神经网络近来在表示学习领域得到广泛的运用，这些网络能够从数据中提取出一般性的特征表征，显示出其强大的能力。但是，这种方法依赖于大量的标记数
